@@ -1,3 +1,14 @@
+<?php
+   session_start();
+   require_once('functions.php');
+
+   if(isset($_POST['btnLogin'])){
+    $email = $_POST['txtEmail'] ?? '';
+    $password = $_POST['txtPassword'] ?? '';
+    getUsers($email, $password);
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -17,15 +28,15 @@
                     <h1 class="h3 mb-4 fw-normal">Login</h1>
                     <form method="post" action="">
                         <div class="form-floating mb-3">
-                            <input type="text" class="form-control" id="email" name="email" placeholder="user1@example.com">
+                            <input type="text" class="form-control" id="txtEmail" name="txtEmail" placeholder="user1@example.com">
                             <label for="email">Email address</label>
                         </div>
                         <div class="form-floating mb-3">
-                            <input type="password" class="form-control" id="password" name="password" placeholder="Password">
+                            <input type="password" class="form-control" id="txtPassword" name="txtPassword" placeholder="Password">
                             <label for="password">Password</label>
                         </div>
                         <div class="form-floating mb-3">
-                            <button type="submit" name="login" class="btn btn-primary w-100">Login</button>
+                            <button type="submit" name="btnLogin" id="btnLogin" class="btn btn-primary w-100">Login</button>
                         </div>
                     </form>
                 </div>
