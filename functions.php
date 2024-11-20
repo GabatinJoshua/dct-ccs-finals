@@ -4,6 +4,23 @@
     DEFINE("DB_PASSOWORD", "");
     DEFINE("DB_NAME", "dct-ccs-finals");
 
+    function userHash($email, $password){
+        $con = openConnection();
+
+        $emailCheck = htmlspecialchars($email);
+        $passwordCheck = htmlspecialchars($password);
+
+        $emailCheck = stripcslashes($email);
+        $passwordCheck = stripcslashes($password);
+
+        $emailCheck = mysqli_real_escape_string($con, $emailCheck);
+        $passwordCheck = mysqli_real_escape_string($con, $passwordCheck);
+
+        $passwordCheck = md5($passwordCheck);
+
+        return [$emailCheck, $passwordCheck];
+    }
+
 
     function getUsers($email, $password){
         $con = openConnection();
@@ -17,8 +34,9 @@
 
         if ($rsLogin = mysqli_query($con, $strSql)) {
             if(mysqli_num_rows($rsLogin) > 0){
-                echo 'WLCOM';
+                header('Location: admin/dashboard.php');
                 mysqli_free_result($rsLogin);
+                exit();
             }
             else
                 echo "no acc";

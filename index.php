@@ -3,10 +3,10 @@
    require_once('functions.php');
 
    if(isset($_POST['btnLogin'])){
-    $email = $_POST['txtEmail'] ?? '';
-    $password = $_POST['txtPassword'] ?? '';
+    list($email, $password) = userHash($_POST['txtEmail'], $_POST['txtPassword']);
+    echo $password;
     getUsers($email, $password);
-}
+    }
 ?>
 
 <!DOCTYPE html>
