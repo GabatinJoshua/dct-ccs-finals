@@ -2,6 +2,7 @@
    session_start();
    require_once('functions.php');
 
+   //email: user1@email.com passowrd: passoword123
    if(isset($_POST['btnLogin'])){
     list($email, $password) = userHash($_POST['txtEmail'], $_POST['txtPassword']);
     echo $password;
