@@ -6,20 +6,17 @@
     header("Location: admin/dashboard.php");
     exit;
 }
-
    //email: user1@email.com passowrd: password123
-   if(isset($_POST['btnLogin'])){
+  if (isset($_POST['btnLogin'])) {
+    $error = checkError($_POST['txtEmail'], $_POST['txtPassword']);
 
-    $error = checkError($_POST['txtEmail'],$_POST['txtPassword']);
-
-    if (!empty($error)){
-        $_SESSION ['auth'] = $_POST['txtEmail'];
-        list($email, $password) = userHash($_POST['txtEmail'], $_POST['txtPassword']);
-        getUsers($email, $password);
-
-    }        
-    
+    if (empty($error)) {
+        $_SESSION['auth'] = $_POST['txtEmail'];
+        header("Location: admin/dashboard.php"); 
+        exit;
     }
+}
+
 ?>
 
 <!DOCTYPE html>
