@@ -2,11 +2,23 @@
    session_start();
    require_once('functions.php');
 
+   if (isset($_SESSION['auth'])) {
+    header("Location: admin/dashboard.php");
+    exit;
+}
+
    //email: user1@email.com passowrd: password123
    if(isset($_POST['btnLogin'])){
-    list($email, $password) = userHash($_POST['txtEmail'], $_POST['txtPassword']);
-    echo $password;
-    getUsers($email, $password);
+
+    $error = checkError($_POST['txtEmail'],$_POST['txtPassword']);
+
+    if (!empty($error)){
+        $_SESSION ['auth'] = $_POST['txtEmail'];
+        list($email, $password) = userHash($_POST['txtEmail'], $_POST['txtPassword']);
+        getUsers($email, $password);
+
+    }        
+    
     }
 ?>
 
@@ -23,7 +35,17 @@
 <body class="bg-secondary-subtle">
     <div class="d-flex align-items-center justify-content-center vh-100">
         <div class="col-3">
-            <!-- Server-Side Validation Messages should be placed here -->
+            <?php if (!empty($error)): ?>
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <strong>SYSTEM ERROR</strong>
+                            <ul>
+                                <?php foreach ($error as $err): ?>
+                                    <li><?php echo $err; ?></li>
+                                <?php endforeach; ?>
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    <?php endif; ?>
             <div class="card">
                 <div class="card-body">
                     <h1 class="h3 mb-4 fw-normal">Login</h1>
