@@ -8,7 +8,7 @@ if (isset($_GET['k'])) {
     $_SESSION['k'] = $_GET['k'];
 }
 
-// Open the connection
+// Open the connection (ensure it's open before running queries)
 $con = openConnection();
 
 // Query to get student information
@@ -41,8 +41,10 @@ $err = [];
 
 // Handle form submission to attach subject(s)
 if (isset($_POST['btnAttach'])) {
+    echo "Form submitted!"; // Debug message
     if (isset($_POST['subject_ids'])) {
         $subjectIds = $_POST['subject_ids'];  // Get the selected subject IDs as an array
+        print_r($subjectIds); // Debug message to print selected subject IDs
 
         // Validate the input
         if (empty($subjectIds)) {
@@ -52,35 +54,45 @@ if (isset($_POST['btnAttach'])) {
         // Attach the subjects to the student
         if (empty($err)) {
             foreach ($subjectIds as $subjectId) {
-                $attachSubjectSql = "INSERT INTO student_subjects (student_id, subject_id) VALUES (?, ?)";
+                $attachSubjectSql = "INSERT INTO students_subjects (student_id, subject_id) VALUES (?, ?)";
 
                 if ($stmt = mysqli_prepare($con, $attachSubjectSql)) {
                     mysqli_stmt_bind_param($stmt, "ii", $_SESSION['k'], $subjectId);
-                    mysqli_stmt_execute($stmt);
-
-                    if (mysqli_stmt_affected_rows($stmt) <= 0) {
-                        $err[] = "Error: Could not attach subject ID $subjectId to student.";
+                    if (mysqli_stmt_execute($stmt)) {
+                        echo "Subject $subjectId attached successfully!"; // Debug message
+                    } else {
+                        $err[] = "Error attaching subject $subjectId: " . mysqli_error($con); // Add database error message
                     }
-
                     mysqli_stmt_close($stmt);
+                } else {
+                    $err[] = "Error preparing statement for subject $subjectId.";
                 }
             }
 
             if (empty($err)) {
                 // Success message
                 $_SESSION['successMsg'] = 'Subjects attached to student successfully!';
-                // Redirect after successful subject attachment
-                header("Location: register.php");
-                exit;
+
+                // Fetch updated list of attached subjects for this student with related information
+                $strSqlAttachedSubjects = "SELECT s.subject_code, s.subject_name, ss.grade, ss.subject_id, s.id AS subject_id
+                                           FROM subjects s
+                                           LEFT JOIN students_subjects ss ON ss.subject_id = s.id
+                                           WHERE ss.student_id = " . $_SESSION['k'] . "
+                                           ORDER BY s.subject_code";
+
+                $attachedSubjectsResult = mysqli_query($con, $strSqlAttachedSubjects);
+
+                if ($attachedSubjectsResult && mysqli_num_rows($attachedSubjectsResult) > 0) {
+                    $attachedSubjects = mysqli_fetch_all($attachedSubjectsResult, MYSQLI_ASSOC);
+                } else {
+                    $attachedSubjects = [];
+                }
             }
         }
     } else {
         $err[] = 'No subjects selected!';
     }
 }
-
-// Close the database connection
-closeConnection($con);
 ?>
 
 <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 pt-5">
@@ -140,55 +152,38 @@ closeConnection($con);
 
     <h2 class="h5 fw-normal mt-4">Attached Subjects</h2>
     <table class="table">
-    <thead>
-        <tr>
-            <th>Subject Code</th>
-            <th>Subject Name</th>
-            <th>Grade</th>
-            <th class="text-center">Option</th>
-        </tr>
-    </thead>
-    <tbody>
-        <?php
-        // Query to get subjects attached to the student along with their grades
-        $strSqlAttachedSubjects = "SELECT s.subject_code, s.subject_name, ss.grade, ss.subject_id 
-                                   FROM subjects s 
-                                   JOIN student_subjects ss ON ss.subject_id = s.id
-                                   WHERE ss.student_id = " . $_SESSION['k'];
+        <thead>
+            <tr>
+                <th>Subject Code</th>
+                <th>Subject Name</th>
+                <th>Grade</th>
+                <th class="text-center">Option</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php
+            if (isset($attachedSubjects) && !empty($attachedSubjects)) {
+                foreach ($attachedSubjects as $subject) {
+                    echo '<tr>';
+                    echo '<td>' . htmlspecialchars($subject['subject_code']) . '</td>';
+                    echo '<td>' . htmlspecialchars($subject['subject_name']) . '</td>';
+                    echo '<td>' . (isset($subject['grade']) ? htmlspecialchars($subject['grade']) : 'No grade assigned') . '</td>';
+                    echo '<td class="text-center">'; 
 
-        $attachedSubjectsResult = mysqli_query($con, $strSqlAttachedSubjects);
-
-        if (mysqli_num_rows($attachedSubjectsResult) > 0) {
-            while ($subject = mysqli_fetch_assoc($attachedSubjectsResult)) {
-                echo '<tr>';
-                echo '<td>' . htmlspecialchars($subject['subject_code']) . '</td>';
-                echo '<td>' . htmlspecialchars($subject['subject_name']) . '</td>';
-                echo '<td>' . (isset($subject['grade']) ? htmlspecialchars($subject['grade']) : 'No grade assigned') . '</td>';
-                echo '<td class="text-center">'; 
-
-                // Check if a grade is assigned or not and set the button text accordingly
-                if (isset($subject['grade']) && !empty($subject['grade'])) {
-                    // If grade is assigned, show "Edit Grade"
-                    echo '<a href="edit-grade.php?subject_id=' . $subject['subject_id'] . '" class="btn btn-info me-2">Edit Grade</a>';
-                } else {
                     // If no grade is assigned, show "Assign Grade"
                     echo '<a href="assign-grade.php?subject_id=' . $subject['subject_id'] . '" class="btn btn-warning me-2">Assign Grade</a>';
+
+                    // Detach button to remove subject from the student
+                    echo '<a href="detach-subject.php?subject_id=' . $subject['subject_id'] . '" class="btn btn-danger">Detach</a>';
+                    echo '</td>';
+                    echo '</tr>';
                 }
-
-                // Detach button to remove subject from the student
-                echo '<a href="detach-subject.php?subject_id=' . $subject['subject_id'] . '" class="btn btn-danger">Detach</a>';
-                echo '</td>';
-                echo '</tr>';
+            } else {
+                echo '<tr><td colspan="4" class="text-center">No subjects attached.</td></tr>';
             }
-        } else {
-            echo '<tr><td colspan="4" class="text-center">No subjects attached.</td></tr>';
-        }
-        ?>
-    </tbody>
-</table>
-
-
-
+            ?>
+        </tbody>
+    </table>
 </main>
 
 <?php require_once('../partials/footer.php'); ?>
