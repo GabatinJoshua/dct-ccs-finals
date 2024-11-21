@@ -138,10 +138,44 @@
     closeConnection($con);
 }
 
-    
+    function getRecord($con, $strSql){
+        $arrRec = [];
+        $i = 0;
+
+        if($rs = mysqli_query($con, $strSql)){
+            if(mysqli_num_rows($rs) == 1){
+                $rec = mysqli_fetch_array($rs);
+                foreach ($rec as $key => $value) {
+                    $arrRec = [$key] = $value;
+                }
+            }else if(mysqli_num_rows($rs) > 1){
+                while ($rec = mysqli_fetch_array($rs)) {
+                    foreach ($rec as $key => $value) {
+                        $arrRec[$i][$key] = $value;
+                    }
+                    $i++;
+                }
+                mysqli_free_result($rs);
+        }
+        }else
+            die("ERROR");
+        
+        return $arrRec;
+
+    }
 
 
+    function idQuery($con, $strSql){
+         if(mysqli_query($con, $strSql))
+            return mysqli_insert_id($con);
+        else
+            return 0;
 
+    }
+
+    function sanitizeInput($con, $input){
+        return mysqli_real_escape_string($con, stripcslashes(htmlspecialchars($input)));
+    }
 
     
 
