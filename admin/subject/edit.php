@@ -25,7 +25,7 @@
         }
     }
 
-    // Initialize error and success message arrays
+    // Initialize error message array
     $err = [];
 
     // Add/Update subject logic
@@ -54,10 +54,8 @@
                 mysqli_stmt_execute($stmt);
 
                 if (mysqli_stmt_affected_rows($stmt) > 0) {
-                    // Success message
-                    $_SESSION['successMsg'] = 'Subject updated successfully!';
-                    // Redirect to avoid resubmitting the form on refresh
-                    header("Location: " . $_SERVER['PHP_SELF']);
+                    // Redirect to add.php after successful update
+                    header("Location: add.php");
                     exit;
                 } else {
                     $err[] = "Error: Could not update subject.";
@@ -77,7 +75,7 @@
 ?>
 
 <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 pt-5">
-	<h1 class="h3 fw-normal">Edit Subject</h1><br>
+    <h1 class="h3 fw-normal">Edit Subject</h1><br>
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item <?php echo ($_SESSION['CURR_PAGE'] == 'dashboard' ? 'active' : ''); ?>"><a href="../dashboard.php">Dashboard</a></li>
@@ -95,14 +93,6 @@
                         <li><?php echo htmlspecialchars($error); ?></li>
                     <?php endforeach; ?>
                 </ul>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        <?php endif; ?>
-
-        <?php if ($successMsg): ?>
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <strong>SUCCESS</strong>
-                <p><?php echo htmlspecialchars($successMsg); ?></p>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         <?php endif; ?>
