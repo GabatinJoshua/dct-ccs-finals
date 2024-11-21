@@ -5,7 +5,7 @@ require_once('../partials/header.php');
 require_once('../partials/side-bar.php');
 guard();
 
-// Variables to hold feedback
+// Variable to hold success feedback
 $successMessage = '';
 
 if (isset($_POST['btnAdd'])) {
@@ -27,42 +27,68 @@ if (isset($_POST['btnAdd'])) {
         $err[] = 'Subject Name is Required!';
     }
 
+    // Fetch existing subject codes from the database to determine format
+    $existingCodesSql = "SELECT subject_code FROM subjects LIMIT 1";  // Get at least one example code
+    $result = mysqli_query($con, $existingCodesSql);
+    $existingSubjectCode = '';
+
+    if ($result && mysqli_num_rows($result) > 0) {
+        $row = mysqli_fetch_assoc($result);
+        $existingSubjectCode = $row['subject_code'];
+    }
+
+    // Validate the format of the subject code based on the existing subject code
+    if (!empty($existingSubjectCode)) {
+        // Example: assume subject code is in the form of 3 letters and 3 digits (e.g., ABC123)
+        if (!preg_match('/^[A-Za-z]{3}\d{3}$/', $subjectCode)) {
+            $err[] = 'Subject Code must follow the format of existing subject codes (e.g., ' . htmlspecialchars($existingSubjectCode) . ')';
+        }
+    }
+
+    // Check for duplicate subject code
+    if (empty($err)) {
+        $duplicateCheckSql = "SELECT * FROM subjects WHERE subject_code = ?";
+        if ($stmt = mysqli_prepare($con, $duplicateCheckSql)) {
+            mysqli_stmt_bind_param($stmt, "s", $subjectCode);
+            mysqli_stmt_execute($stmt);
+            mysqli_stmt_store_result($stmt);
+
+            if (mysqli_stmt_num_rows($stmt) > 0) {
+                $err[] = 'Subject Code already exists!';
+            }
+            mysqli_stmt_close($stmt);
+        }
+    }
+
     // If no errors, insert into the database
     if (empty($err)) {
-        // Prepared statement to prevent SQL injection
         $strSql = "INSERT INTO subjects (subject_code, subject_name) VALUES (?, ?)";
 
-        // Prepare the statement
         if ($stmt = mysqli_prepare($con, $strSql)) {
-            // Bind the parameters
             mysqli_stmt_bind_param($stmt, "ss", $subjectCode, $subjectName);
-            
-            // Execute the statement
             mysqli_stmt_execute($stmt);
-            
-            // Check if the insert was successful
+
             if (mysqli_stmt_affected_rows($stmt) > 0) {
                 $successMessage = "Subject added successfully!";
             } else {
-                $errorMessage = "Error: Could not insert subject.";
+                $err[] = "Error: Could not insert subject.";
             }
-            
-            // Close the prepared statement
+
             mysqli_stmt_close($stmt);
         } else {
-            $errorMessage = "Error preparing the query: " . mysqli_error($con);
+            $err[] = "Error preparing the query: " . mysqli_error($con);
         }
-    } else {
-        $errorMessage = implode('<br>', $err);
     }
 
     // Close the database connection
     closeConnection($con);
 }
-
 ?>
 
 <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 pt-5">
+	<h1 class="h3 fw-normal">Add a New Subject</h1><br>
+
+
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item <?php echo ($_SESSION['CURR_PAGE'] == 'dashboard' ? 'active' : ''); ?>"><a href="../dashboard.php">Dashboard</a></li>
@@ -78,16 +104,16 @@ if (isset($_POST['btnAdd'])) {
             </div>
         <?php endif; ?>
         <?php if (!empty($err) && is_array($err)): ?>
-		    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-		        <strong>SYSTEM ERROR</strong>
-		        <ul>
-		            <?php foreach ($err as $error): ?>
-		                <li><?php echo htmlspecialchars($error); ?></li>
-		            <?php endforeach; ?>
-		        </ul>
-		        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-		    </div>
-		<?php endif; ?>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <strong>SYSTEM ERROR</strong>
+                <ul>
+                    <?php foreach ($err as $error): ?>
+                        <li><?php echo htmlspecialchars($error); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <?php endif; ?>
 
         <div class="form-group mb-3"> 
             <input type="text" class="form-control" id="txtSubjectCode" name="txtSubjectCode" placeholder="Subject Code">
@@ -115,15 +141,15 @@ if (isset($_POST['btnAdd'])) {
                 $strSql = "SELECT * FROM subjects ORDER BY subject_code, subject_name";
                 $recPersons = getRecord($con, $strSql);
 
-                if(!empty($recPersons)){
-                    foreach ($recPersons as $key => $value) {
+                if (!empty($recPersons)) {
+                    foreach ($recPersons as $value) {
                         echo '<tr>';
-                            echo '<td>' . htmlspecialchars($value['subject_code']) . '</td>'; 
-                            echo '<td>' . htmlspecialchars($value['subject_name']) . '</td>';
-                            echo '<td class="text-center">';
-                                echo '<a href="edit.php" class="btn btn-success">Edit</a>';
-                                echo '<a href="delete.php" class="btn btn-danger">Delete</a>';
-                            echo '<td>';
+                        echo '<td>' . htmlspecialchars($value['subject_code']) . '</td>'; 
+                        echo '<td>' . htmlspecialchars($value['subject_name']) . '</td>';
+                        echo '<td class="text-center">';
+                        	echo '<a href="edit.php" class="btn btn-info me-2">Edit</a>';
+                        	echo '<a href="delete.php" class="btn btn-danger">Delete</a>';
+                        echo '<td>';
                         echo '</tr>';
                     }
                 } else {
