@@ -1,9 +1,15 @@
 <?php 
     session_start();
+    $_SESSION['CURR_PAGE'] = 'dashboard';
     require_once('partials/header.php');
     require_once('partials/side-bar.php');
-
     guard();
+
+
+    if (isset($_SESSION['auth']) && basename($_SERVER['PHP_SELF']) !== 'dashboard.php') {
+    header("Location: admin/dashboard.php");
+    exit;
+}
 ?>
 
 <!-- Template Files here -->
@@ -57,6 +63,5 @@
     </div>    
 </main>
 
-<?php require_once ('partials/footer.php');
- ?>
+<?php require_once ('partials/footer.php');?>
 <!-- Template Files here -->

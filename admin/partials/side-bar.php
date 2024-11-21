@@ -7,13 +7,13 @@
         <div class="offcanvas-body d-md-flex flex-column p-0 pt-lg-3 overflow-y-auto">
             <ul class="nav flex-column">
                 <li class="nav-item">
-                    <a class="nav-link d-flex align-items-center gap-2" href="#">
+                    <a class="nav-link <?php echo($_SESSION['CURR_PAGE'] == 'dashboard' ? 'active text-dark' : ''); ?> d-flex align-items-center gap-2" href="<?php echo ($_SESSION['CURR_PAGE'] == 'dashboard' ? '' : '../dashboard.php'); ?>">
                         <i class="fa-solid fa-gauge fa-fw me-2"></i>
                         Dashboard
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link d-flex align-items-center gap-2" href="#">
+                    <a class="nav-link <?php echo($_SESSION['CURR_PAGE'] == 'subject' ? 'active text-dark' : ''); ?> d-flex align-items-center gap-2" href="<?php echo ($_SESSION['CURR_PAGE'] == 'subject' ? '' : 'subject/add.php'); ?>">
                         Subjects
                     </a>
                 </li>
