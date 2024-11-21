@@ -85,13 +85,13 @@ if (isset($_POST['btnDelete'])) {
 
         <ul class="mb-3">
             <li>
-                <strong>Subject Code:</strong> <?php echo htmlspecialchars($recPersons['student_id']); ?>
+                <strong>Student ID:</strong> <?php echo htmlspecialchars($recPersons['student_id']); ?>
             </li>
             <li>
-                <strong>Subject Name:</strong> <?php echo htmlspecialchars($recPersons['first_name']); ?>
+                <strong>First Name:</strong> <?php echo htmlspecialchars($recPersons['first_name']); ?>
             </li>
             <li>
-                <strong>Subject Name:</strong> <?php echo htmlspecialchars($recPersons['last_name']); ?>
+                <strong>Last Name:</strong> <?php echo htmlspecialchars($recPersons['last_name']); ?>
             </li>
         </ul>
 
