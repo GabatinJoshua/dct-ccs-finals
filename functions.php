@@ -1,11 +1,11 @@
 <?php    
     DEFINE("DB_SERVER", "localhost");
     DEFINE("DB_USERNAME", "root");
-    DEFINE("DB_PASSOWORD", "");
+    DEFINE("DB_PASSWORD", "");
     DEFINE("DB_NAME", "dct-ccs-finals");
 
     function openConnection(){
-        $con = mysqli_connect(DB_SERVER,DB_USERNAME,DB_PASSOWORD,DB_NAME);
+        $con = mysqli_connect(DB_SERVER,DB_USERNAME,DB_PASSWORD,DB_NAME);
 
         if ($con == false) {
             die("ERROR: could not connect" . mysqli_connect_error());
