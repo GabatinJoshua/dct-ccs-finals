@@ -108,6 +108,36 @@
             }
 
 
+    function countRecord($input){
+    $con = openConnection();
+
+    // Sanitize the table name input to prevent SQL injection
+    $input = mysqli_real_escape_string($con, $input);
+
+    $strSql = "
+        SELECT COUNT(*) AS total FROM $input;
+    ";
+
+    if ($rsLogin = mysqli_query($con, $strSql)) {
+        // Fetch the result as an associative array
+        $row = mysqli_fetch_assoc($rsLogin);
+
+        // Check if a result is returned
+        if ($row) {
+            $total = $row['total']; // Get the count value
+            echo $total;
+        } else {
+            echo "Error fetching data.";
+        }
+
+        mysqli_free_result($rsLogin); // Free the result set
+    } else {
+        echo "Error in query.";
+    }
+
+    closeConnection($con);
+}
+
 
     
 
