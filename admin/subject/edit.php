@@ -27,7 +27,6 @@
 
     // Initialize error and success message arrays
     $err = [];
-    $successMsg = '';
 
     // Add/Update subject logic
     if (isset($_POST['btnAdd'])) {
@@ -56,7 +55,7 @@
 
                 if (mysqli_stmt_affected_rows($stmt) > 0) {
                     // Success message
-                    $successMsg = 'Subject updated successfully!';
+                    $_SESSION['successMsg'] = 'Subject updated successfully!';
                     // Redirect to avoid resubmitting the form on refresh
                     header("Location: " . $_SERVER['PHP_SELF']);
                     exit;
@@ -71,9 +70,14 @@
         // Close the database connection
         closeConnection($con);
     }
+
+    // Check for success message in session
+    $successMsg = isset($_SESSION['successMsg']) ? $_SESSION['successMsg'] : '';
+    unset($_SESSION['successMsg']); // Clear the success message after displaying it
 ?>
 
 <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 pt-5">
+	<h1 class="h3 fw-normal">Edit Subject</h1><br>
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item <?php echo ($_SESSION['CURR_PAGE'] == 'dashboard' ? 'active' : ''); ?>"><a href="../dashboard.php">Dashboard</a></li>
@@ -104,7 +108,7 @@
         <?php endif; ?>
 
         <div class="form-group mb-3"> 
-            <input type="text" class="form-control" value="<?php echo (isset($recPersons['subject_code']) ? htmlspecialchars($recPersons['subject_code']) : ''); ?>" id="txtSubjectCode" name="txtSubjectCode" placeholder="Subject Code">
+            <input type="text" class="form-control" maxlength="4" value="<?php echo (isset($recPersons['subject_code']) ? htmlspecialchars($recPersons['subject_code']) : ''); ?>" id="txtSubjectCode" name="txtSubjectCode" placeholder="Subject Code">
         </div>
         <div class="form-group mb-3">
             <input type="text" class="form-control" value="<?php echo (isset($recPersons['subject_name']) ? htmlspecialchars($recPersons['subject_name']) : ''); ?>" id="txtSubjectName" name="txtSubjectName" placeholder="Subject Name">

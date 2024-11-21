@@ -125,7 +125,7 @@ if (isset($_POST['btnAdd'])) {
                         echo '<td>' . htmlspecialchars($value['subject_name']) . '</td>';
                         echo '<td class="text-center">';
                         	echo '<a href="edit.php?k=' . $value['id'] . '" class="btn btn-info me-2">Edit</a>';
-                        	echo '<a href="delete.php" class="btn btn-danger">Delete</a>';
+                        	echo '<a href="delete.php?k=' . $value['id'] . '" class="btn btn-danger">Delete</a>';
                         echo '</td>';
                         echo '</tr>';
                     }
