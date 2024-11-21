@@ -7,24 +7,46 @@
         <div class="offcanvas-body d-md-flex flex-column p-0 pt-lg-3 overflow-y-auto">
             <ul class="nav flex-column">
                 <li class="nav-item">
-                    <a class="nav-link <?php echo($_SESSION['CURR_PAGE'] == 'dashboard' ? 'active text-dark' : ''); ?> d-flex align-items-center gap-2" href="<?php echo ($_SESSION['CURR_PAGE'] == 'dashboard' ? '' : '../dashboard.php'); ?>">
+                    <a class="nav-link <?php echo($_SESSION['CURR_PAGE'] == 'dashboard' ? 'active fw-bold' : ''); ?> d-flex align-items-center gap-2" href="<?php 
+                        if ($_SESSION['CURR_PAGE'] == 'dashboard') {
+                            echo('');
+                        } else {
+                            echo('../dashboard.php');
+                        }
+                    ?>">
                         <i class="fa-solid fa-gauge fa-fw me-2"></i>
                         Dashboard
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?php echo($_SESSION['CURR_PAGE'] == 'subject' ? 'active text-dark' : ''); ?> d-flex align-items-center gap-2" href="<?php echo ($_SESSION['CURR_PAGE'] == 'subject' ? '' : 'subject/add.php'); ?>">
+                    <a class="nav-link <?php echo($_SESSION['CURR_PAGE'] == 'subject' ? 'active fw-bold' : ''); ?> d-flex align-items-center gap-2" href="<?php 
+                        if ($_SESSION['CURR_PAGE'] == 'subject') {
+                            echo('');
+                        } else if ($_SESSION['CURR_PAGE'] == 'student') {
+                            echo('../subject/add.php');
+                        } else {
+                            echo('subject/add.php');
+                        }
+                    ?>">
                         Subjects
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link d-flex align-items-center gap-2" href="#">
+                    <a class="nav-link <?php echo($_SESSION['CURR_PAGE'] == 'student' ? 'active fw-bold' : ''); ?> d-flex align-items-center gap-2" href="<?php 
+                        if ($_SESSION['CURR_PAGE'] == 'student') {
+                            echo('');
+                        } else if ($_SESSION['CURR_PAGE'] == 'subject') {
+                            echo('../student/register.php');
+                        } else {
+                            echo('student/register.php');
+                        }
+                    ?>">
                         <i class="fa-solid fa-user fa-fw me-2"></i>
                         Students
                     </a>
                 </li>                
             </ul>
-           
+
             <hr class="my-3">
 
             <ul class="nav flex-column mb-auto">
