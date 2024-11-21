@@ -138,31 +138,27 @@
     closeConnection($con);
 }
 
-    function getRecord($con, $strSql){
-        $arrRec = [];
-        $i = 0;
+   function getRecord($con, $strSql) {
+    $arrRec = []; // Initialize the result array
 
-        if($rs = mysqli_query($con, $strSql)){
-            if(mysqli_num_rows($rs) == 1){
-                $rec = mysqli_fetch_array($rs);
-                foreach ($rec as $key => $value) {
-                    $arrRec = [$key] = $value;
-                }
-            }else if(mysqli_num_rows($rs) > 1){
-                while ($rec = mysqli_fetch_array($rs)) {
-                    foreach ($rec as $key => $value) {
-                        $arrRec[$i][$key] = $value;
-                    }
-                    $i++;
-                }
-                mysqli_free_result($rs);
+    if ($rs = mysqli_query($con, $strSql)) {
+        if (mysqli_num_rows($rs) == 1) {
+            // Fetch the single row as an associative array
+            $arrRec[] = mysqli_fetch_assoc($rs);
+        } else if (mysqli_num_rows($rs) > 1) {
+            // Fetch multiple rows
+            while ($rec = mysqli_fetch_assoc($rs)) {
+                $arrRec[] = $rec; // Append each row to the result array
+            }
         }
-        }else
-            die("ERROR");
-        
-        return $arrRec;
-
+        mysqli_free_result($rs); // Free the result set
+    } else {
+        die("ERROR: Query failed: " . mysqli_error($con)); // Display the error for debugging
     }
+
+    return $arrRec; // Return the result array
+}
+
 
 
     function idQuery($con, $strSql){
@@ -176,9 +172,6 @@
     function sanitizeInput($con, $input){
         return mysqli_real_escape_string($con, stripcslashes(htmlspecialchars($input)));
     }
-
-    
-
 
 
 
