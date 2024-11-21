@@ -45,7 +45,7 @@
             $err[] = 'Subject Name is Required!';
         }
 
-        // Check for duplicate subject code
+        // Since we want to allow updating even with the same subject code, skip the check for duplicate subject code
         if (empty($err)) {
             $strSql = "UPDATE subjects SET subject_code = ?, subject_name = ? WHERE id = ?";
 
