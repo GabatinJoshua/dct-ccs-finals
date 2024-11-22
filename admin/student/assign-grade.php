@@ -1,5 +1,13 @@
 <?php
-// Assuming database connection is already open
+session_start();
+require_once('../partials/header.php');
+require_once('../partials/side-bar.php');
+require_once('../partials/db-connection.php'); // Make sure to include the connection file
+
+guard();
+
+// Make sure the connection is established
+$con = openConnection();
 
 if (isset($_GET['subject_id'])) {
     $subjectId = $_GET['subject_id'];
@@ -34,18 +42,25 @@ if (isset($_GET['subject_id'])) {
         if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['grade'])) {
             $grade = $_POST['grade'];
 
-            // Update the grade for this subject
-            $updateGradeSql = "UPDATE student_subjects SET grade = ? WHERE student_id = ? AND subject_id = ?";
-            if ($stmt = mysqli_prepare($con, $updateGradeSql)) {
-                mysqli_stmt_bind_param($stmt, "sii", $grade, $_SESSION['k'], $subjectId);
-                mysqli_stmt_execute($stmt);
+            // Ensure the grade is a valid input (you can add further validation if needed)
+            if (!empty($grade)) {
+                // Update the grade for this subject
+                $updateGradeSql = "UPDATE student_subjects SET grade = ? WHERE student_id = ? AND subject_id = ?";
+                if ($stmt = mysqli_prepare($con, $updateGradeSql)) {
+                    mysqli_stmt_bind_param($stmt, "sii", $grade, $_SESSION['k'], $subjectId);
+                    mysqli_stmt_execute($stmt);
 
-                if (mysqli_stmt_affected_rows($stmt) > 0) {
-                    echo '<div class="alert alert-success mt-3">Grade assigned successfully!</div>';
+                    if (mysqli_stmt_affected_rows($stmt) > 0) {
+                        echo '<div class="alert alert-success mt-3">Grade assigned successfully!</div>';
+                    } else {
+                        echo '<div class="alert alert-danger mt-3">Error assigning grade. Please try again or check if the grade has already been assigned.</div>';
+                    }
+                    mysqli_stmt_close($stmt);
                 } else {
-                    echo '<div class="alert alert-danger mt-3">Error assigning grade. Please try again.</div>';
+                    echo '<div class="alert alert-danger mt-3">Error preparing the SQL statement. Please try again.</div>';
                 }
-                mysqli_stmt_close($stmt);
+            } else {
+                echo '<div class="alert alert-warning mt-3">Please enter a grade.</div>';
             }
         }
         

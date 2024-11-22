@@ -1,4 +1,4 @@
-<?php 
+<?php
 session_start();
 require_once('../partials/header.php');
 require_once('../partials/side-bar.php');
@@ -8,7 +8,7 @@ if (isset($_GET['k'])) {
     $_SESSION['k'] = $_GET['k'];
 }
 
-// Open the connection (ensure it's open before running queries)
+// Open the connection
 $con = openConnection();
 
 // Query to get student information
@@ -40,11 +40,9 @@ if (mysqli_num_rows($subjectsResult) > 0) {
 $err = [];
 
 // Handle form submission to attach subject(s)
-if (isset($_POST['btnAttach'])) {
-    echo "Form submitted!"; // Debug message
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['subject_ids'])) {
         $subjectIds = $_POST['subject_ids'];  // Get the selected subject IDs as an array
-        print_r($subjectIds); // Debug message to print selected subject IDs
 
         // Validate the input
         if (empty($subjectIds)) {
@@ -54,38 +52,20 @@ if (isset($_POST['btnAttach'])) {
         // Attach the subjects to the student
         if (empty($err)) {
             foreach ($subjectIds as $subjectId) {
-                $attachSubjectSql = "INSERT INTO students_subjects (student_id, subject_id) VALUES (?, ?)";
+                // Adjusted query with grade set to 0.00
+                $attachSubjectSql = "INSERT INTO students_subjects (student_id, subject_id, grade) VALUES (?, ?, 0.00)";
 
                 if ($stmt = mysqli_prepare($con, $attachSubjectSql)) {
                     mysqli_stmt_bind_param($stmt, "ii", $_SESSION['k'], $subjectId);
                     if (mysqli_stmt_execute($stmt)) {
-                        echo "Subject $subjectId attached successfully!"; // Debug message
+                        // Set a success message and keep the page on the same URL
+                        $_SESSION['successMsg'] = 'Subjects attached successfully!';
                     } else {
-                        $err[] = "Error attaching subject $subjectId: " . mysqli_error($con); // Add database error message
+                        $err[] = "Error attaching subject: " . mysqli_error($con); // Add database error message
                     }
                     mysqli_stmt_close($stmt);
                 } else {
-                    $err[] = "Error preparing statement for subject $subjectId.";
-                }
-            }
-
-            if (empty($err)) {
-                // Success message
-                $_SESSION['successMsg'] = 'Subjects attached to student successfully!';
-
-                // Fetch updated list of attached subjects for this student with related information
-                $strSqlAttachedSubjects = "SELECT s.subject_code, s.subject_name, ss.grade, ss.subject_id, s.id AS subject_id
-                                           FROM subjects s
-                                           LEFT JOIN students_subjects ss ON ss.subject_id = s.id
-                                           WHERE ss.student_id = " . $_SESSION['k'] . "
-                                           ORDER BY s.subject_code";
-
-                $attachedSubjectsResult = mysqli_query($con, $strSqlAttachedSubjects);
-
-                if ($attachedSubjectsResult && mysqli_num_rows($attachedSubjectsResult) > 0) {
-                    $attachedSubjects = mysqli_fetch_all($attachedSubjectsResult, MYSQLI_ASSOC);
-                } else {
-                    $attachedSubjects = [];
+                    $err[] = "Error preparing statement for subject.";
                 }
             }
         }
@@ -97,6 +77,7 @@ if (isset($_POST['btnAttach'])) {
 
 <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 pt-5">
     <h1 class="h3 fw-normal">Attach Subjects To Student</h1><br>
+
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item <?php echo ($_SESSION['CURR_PAGE'] == 'dashboard' ? 'active' : ''); ?>"><a href="../dashboard.php">Dashboard</a></li>
@@ -105,28 +86,34 @@ if (isset($_POST['btnAttach'])) {
         </ol>
     </nav>
 
-    <form class="border p-4 rounded" method="POST">
-        <?php if (!empty($err)): ?>
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <strong>SYSTEM ERROR</strong>
-                <ul>
-                    <?php foreach ($err as $error): ?>
-                        <li><?php echo htmlspecialchars($error); ?></li>
-                    <?php endforeach; ?>
-                </ul>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        <?php endif; ?>
+    <!-- Handle Errors -->
+    <?php if (!empty($err)): ?>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>SYSTEM ERROR</strong>
+            <ul>
+                <?php foreach ($err as $error): ?>
+                    <li><?php echo htmlspecialchars($error); ?></li>
+                <?php endforeach; ?>
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    <?php endif; ?>
 
+    <!-- Success message -->
+    <?php if (isset($_SESSION['successMsg'])): ?>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <strong>Success!</strong> <?php echo htmlspecialchars($_SESSION['successMsg']); ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <?php unset($_SESSION['successMsg']); // Clear success message after displaying ?>
+    <?php endif; ?>
+
+    <form class="border p-4 rounded" method="POST">
         <h1 class="h5 fw-normal">Select Student Information</h1>
 
         <ul class="mb-3">
-            <li>
-                <strong>Student ID:</strong> <?php echo htmlspecialchars($recPersons['student_id']); ?>
-            </li>
-            <li>
-                <strong>Full Name:</strong> <?php echo htmlspecialchars($recPersons['first_name']) . ' ' . htmlspecialchars($recPersons['last_name']); ?>
-            </li>
+            <li><strong>Student ID:</strong> <?php echo htmlspecialchars($recPersons['student_id']); ?></li>
+            <li><strong>Full Name:</strong> <?php echo htmlspecialchars($recPersons['first_name']) . ' ' . htmlspecialchars($recPersons['last_name']); ?></li>
         </ul>
 
         <hr>
@@ -150,6 +137,7 @@ if (isset($_POST['btnAttach'])) {
         </div>
     </form>
 
+    <!-- Attached Subjects Display -->
     <h2 class="h5 fw-normal mt-4">Attached Subjects</h2>
     <table class="table">
         <thead>
@@ -162,18 +150,25 @@ if (isset($_POST['btnAttach'])) {
         </thead>
         <tbody>
             <?php
-            if (isset($attachedSubjects) && !empty($attachedSubjects)) {
+            // Fetching attached subjects and grades
+            $strSqlAttachedSubjects = "SELECT s.id AS subject_id, s.subject_code, s.subject_name, ss.grade
+                                       FROM students_subjects ss
+                                       JOIN subjects s ON ss.subject_id = s.id
+                                       WHERE ss.student_id = " . $_SESSION['k'] . "
+                                       ORDER BY s.subject_code";
+
+            $attachedSubjectsResult = mysqli_query($con, $strSqlAttachedSubjects);
+
+            if ($attachedSubjectsResult && mysqli_num_rows($attachedSubjectsResult) > 0) {
+                $attachedSubjects = mysqli_fetch_all($attachedSubjectsResult, MYSQLI_ASSOC);
                 foreach ($attachedSubjects as $subject) {
+                    // Check for 'subject_id' key before using it
                     echo '<tr>';
                     echo '<td>' . htmlspecialchars($subject['subject_code']) . '</td>';
                     echo '<td>' . htmlspecialchars($subject['subject_name']) . '</td>';
-                    echo '<td>' . (isset($subject['grade']) ? htmlspecialchars($subject['grade']) : 'No grade assigned') . '</td>';
-                    echo '<td class="text-center">'; 
-
-                    // If no grade is assigned, show "Assign Grade"
+                    echo '<td>' . (isset($subject['grade']) && !empty($subject['grade']) && $subject['grade'] != -1 ? htmlspecialchars($subject['grade']) : '--.--') . '</td>';
+                    echo '<td class="text-center">';
                     echo '<a href="assign-grade.php?subject_id=' . $subject['subject_id'] . '" class="btn btn-warning me-2">Assign Grade</a>';
-
-                    // Detach button to remove subject from the student
                     echo '<a href="detach-subject.php?subject_id=' . $subject['subject_id'] . '" class="btn btn-danger">Detach</a>';
                     echo '</td>';
                     echo '</tr>';
