@@ -1,4 +1,6 @@
-<?php 
+<?php
+ob_start();  // Start output buffering
+
 session_start();
 $_SESSION['CURR_PAGE'] = 'subject';
 require_once('../partials/header.php');
@@ -67,6 +69,7 @@ if (isset($_POST['btnAdd'])) {
     // Close the database connection
     closeConnection($con);
 }
+
 ?>
 
 <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 pt-5">
@@ -92,12 +95,23 @@ if (isset($_POST['btnAdd'])) {
             </div>
         <?php endif; ?>
 
-        <div class="form-group mb-3"> 
-            <input type="text" class="form-control" id="txtSubjectCode" name="txtSubjectCode" placeholder="Subject Code" maxlength="4">
-        </div>
         <div class="form-group mb-3">
-            <input type="text" class="form-control" id="txtSubjectName" name="txtSubjectName" placeholder="Subject Name">
-        </div>
+    <!-- Retain the value if there's no error -->
+		    <input type="text" class="form-control" 
+		        id="txtSubjectCode" 
+		        name="txtSubjectCode" 
+		        placeholder="Subject Code" 
+		        maxlength="4" 
+		        value="<?php echo isset($_POST['txtSubjectCode']) ? htmlspecialchars($_POST['txtSubjectCode']) : ''; ?>">
+		</div>
+		<div class="form-group mb-3">
+		    <!-- Retain the value if there's no error -->
+		    <input type="text" class="form-control" 
+		        id="txtSubjectName" 
+		        name="txtSubjectName" 
+		        placeholder="Subject Name"
+		        value="<?php echo isset($_POST['txtSubjectName']) ? htmlspecialchars($_POST['txtSubjectName']) : ''; ?>">
+		</div>
         <div class="form-group">
             <button type="submit" class="btn btn-primary w-100" name="btnAdd" id="btnAdd">Add Subject</button>
         </div>
@@ -138,4 +152,6 @@ if (isset($_POST['btnAdd'])) {
     </form>
 </main>
 
-<?php require_once ('../partials/footer.php');?>
+<?php require_once ('../partials/footer.php');?> 
+
+<?php ob_end_flush();  // Send the output buffer to the browser ?>

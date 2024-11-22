@@ -1,76 +1,76 @@
 <?php 
-    session_start();
-    $_SESSION['CURR_PAGE'] = 'student';
-    require_once('../partials/header.php');
-    require_once('../partials/side-bar.php');
-    guard();
+session_start();
+$_SESSION['CURR_PAGE'] = 'student';
+require_once('../partials/header.php');
+require_once('../partials/side-bar.php');
+guard();
 
-    if (isset($_POST['btnAdd'])) {
-        // Open the connection
-        $con = openConnection();
+if (isset($_POST['btnAdd'])) {
+    // Open the connection
+    $con = openConnection();
 
-        // Sanitize input data
-        $studentID = sanitizeInput($con, $_POST['txtStudentID']);
-        $firstName = sanitizeInput($con, $_POST['txtFName']);
-        $lastName = sanitizeInput($con, $_POST['txtLName']);
+    // Sanitize input data
+    $studentID = sanitizeInput($con, $_POST['txtStudentID']);
+    $firstName = sanitizeInput($con, $_POST['txtFName']);
+    $lastName = sanitizeInput($con, $_POST['txtLName']);
 
-        // Initialize error array
-        $err = [];
+    // Initialize error array
+    $err = [];
 
-        // Validate inputs
-        if (empty($studentID)) {
-            $err[] = 'Student ID is Required!';
-        }
-        if (empty($firstName)) {
-            $err[] = 'First Name is Required!';
-        }
-        if (empty($lastName)) {
-            $err[] = 'Last Name is Required!';
-        }
-
-        // Check for duplicate student ID
-        if (empty($err)) {
-            $checkDuplicateSql = "SELECT * FROM students WHERE student_id = ?";
-            if ($stmt = mysqli_prepare($con, $checkDuplicateSql)) {
-                mysqli_stmt_bind_param($stmt, "s", $studentID);
-                mysqli_stmt_execute($stmt);
-                mysqli_stmt_store_result($stmt);
-
-                if (mysqli_stmt_num_rows($stmt) > 0) {
-                    // If duplicate found, add error
-                    $err[] = 'Student ID already exists!';
-                }
-                mysqli_stmt_close($stmt);
-            } else {
-                $err[] = "Error preparing the query: " . mysqli_error($con);
-            }
-        }
-
-        // If no errors, insert into the database
-        if (empty($err)) {
-            $strSql = "INSERT INTO students (student_id, first_name, last_name) VALUES (?, ?, ?)";
-
-            if ($stmt = mysqli_prepare($con, $strSql)) {
-                mysqli_stmt_bind_param($stmt, "sss", $studentID, $firstName, $lastName);
-                mysqli_stmt_execute($stmt);
-
-                if (mysqli_stmt_affected_rows($stmt) > 0) {
-                    // Redirect back to the page to refresh
-                    header("Location: " . $_SERVER['PHP_SELF']);
-                    exit; // Ensure the page is refreshed after redirect
-                } else {
-                    $err[] = "Error: Could not insert student.";
-                }
-
-                mysqli_stmt_close($stmt);
-            } else {
-                $err[] = "Error preparing the query: " . mysqli_error($con);
-            }
-        }
-
-        // Close the database connection
-        closeConnection($con);
+    // Validate inputs
+    if (empty($studentID)) {
+        $err[] = 'Student ID is Required!';
     }
+    if (empty($firstName)) {
+        $err[] = 'First Name is Required!';
+    }
+    if (empty($lastName)) {
+        $err[] = 'Last Name is Required!';
+    }
+
+    // Check for duplicate student ID
+    if (empty($err)) {
+        $checkDuplicateSql = "SELECT * FROM students WHERE student_id = ?";
+        if ($stmt = mysqli_prepare($con, $checkDuplicateSql)) {
+            mysqli_stmt_bind_param($stmt, "s", $studentID);
+            mysqli_stmt_execute($stmt);
+            mysqli_stmt_store_result($stmt);
+
+            if (mysqli_stmt_num_rows($stmt) > 0) {
+                // If duplicate found, add error
+                $err[] = 'Student ID already exists!';
+            }
+            mysqli_stmt_close($stmt);
+        } else {
+            $err[] = "Error preparing the query: " . mysqli_error($con);
+        }
+    }
+
+    // If no errors, insert into the database
+    if (empty($err)) {
+        $strSql = "INSERT INTO students (student_id, first_name, last_name) VALUES (?, ?, ?)";
+
+        if ($stmt = mysqli_prepare($con, $strSql)) {
+            mysqli_stmt_bind_param($stmt, "sss", $studentID, $firstName, $lastName);
+            mysqli_stmt_execute($stmt);
+
+            if (mysqli_stmt_affected_rows($stmt) > 0) {
+                // Redirect back to the page to refresh
+                header("Location: " . $_SERVER['PHP_SELF']);
+                exit; // Ensure the page is refreshed after redirect
+            } else {
+                $err[] = "Error: Could not insert student.";
+            }
+
+            mysqli_stmt_close($stmt);
+        } else {
+            $err[] = "Error preparing the query: " . mysqli_error($con);
+        }
+    }
+
+    // Close the database connection
+    closeConnection($con);
+}
 ?>
 
 <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 pt-5">
@@ -97,13 +97,13 @@
         <?php endif; ?>
 
         <div class="form-group mb-3"> 
-            <input type="text" class="form-control" id="txtStudentID" name="txtStudentID" placeholder="Student ID" maxlength="4">
+            <input type="text" class="form-control" id="txtStudentID" name="txtStudentID" placeholder="Student ID" maxlength="4" value="<?php echo isset($studentID) ? htmlspecialchars($studentID) : ''; ?>">
         </div>
         <div class="form-group mb-3">
-            <input type="text" class="form-control" id="txtFName" name="txtFName" placeholder="First Name">
+            <input type="text" class="form-control" id="txtFName" name="txtFName" placeholder="First Name" value="<?php echo isset($firstName) ? htmlspecialchars($firstName) : ''; ?>">
         </div>
         <div class="form-group mb-3">
-            <input type="text" class="form-control" id="txtLName" name="txtLName" placeholder="Last Name">
+            <input type="text" class="form-control" id="txtLName" name="txtLName" placeholder="Last Name" value="<?php echo isset($lastName) ? htmlspecialchars($lastName) : ''; ?>">
         </div>
         <div class="form-group">
             <button type="submit" class="btn btn-primary w-100" name="btnAdd" id="btnAdd">Add Student</button>

@@ -1,65 +1,53 @@
-<?php
-// Assuming database connection is already open
+<?php session_start();
+require_once('../partials/header.php');
+require_once('../partials/side-bar.php');
+guard();
+ ?>
 
-if (isset($_GET['subject_id'])) {
-    $subjectId = $_GET['subject_id'];
-    
-    // Fetch student and subject details to display
-    $strSqlDetails = "SELECT s.subject_code, s.subject_name, st.student_id, st.first_name, st.last_name
-                      FROM student_subjects ss
-                      JOIN students st ON ss.student_id = st.id
-                      JOIN subjects s ON ss.subject_id = s.id
-                      WHERE ss.student_id = ? AND ss.subject_id = ?";
-    
-    if ($stmt = mysqli_prepare($con, $strSqlDetails)) {
-        mysqli_stmt_bind_param($stmt, "ii", $_SESSION['k'], $subjectId);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        $subjectDetails = mysqli_fetch_assoc($result);
-        mysqli_stmt_close($stmt);
-    }
+ <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 pt-5">
+    <h1 class="h3 fw-normal">Delete Subject</h1><br>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item <?php echo ($_SESSION['CURR_PAGE'] == 'dashboard' ? 'active' : ''); ?>"><a href="../dashboard.php">Dashboard</a></li>
+            <li class="breadcrumb-item <?php echo ($_SESSION['CURR_PAGE'] == 'student' ? 'active' : ''); ?>"><a href="register.php">Register Student</a></li>
+            <li class="breadcrumb-item <?php echo ($_SESSION['CURR_PAGE'] == 'student' ? 'active' : ''); ?>"><a href="attach-subject.php">Attach Subjects To Student</a></li>        
+            <li class="breadcrumb-item">Dettach Subject to Student</li>
+        </ol>
+    </nav>
 
-    // Check if data exists
-    if ($subjectDetails) {
-        echo '<main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 pt-5">';
-        echo '<h1 class="h3 fw-normal">Detach Subject: ' . htmlspecialchars($subjectDetails['subject_code']) . ' - ' . htmlspecialchars($subjectDetails['subject_name']) . '</h1>';
-        
-        // Display the details of the student and subject
-        echo '<h4 class="fw-normal">Student Information</h4>';
-        echo '<ul>';
-        echo '<li><strong>Student ID:</strong> ' . htmlspecialchars($subjectDetails['student_id']) . '</li>';
-        echo '<li><strong>Student Name:</strong> ' . htmlspecialchars($subjectDetails['first_name']) . ' ' . htmlspecialchars($subjectDetails['last_name']) . '</li>';
-        echo '<li><strong>Subject Code:</strong> ' . htmlspecialchars($subjectDetails['subject_code']) . '</li>';
-        echo '<li><strong>Subject Name:</strong> ' . htmlspecialchars($subjectDetails['subject_name']) . '</li>';
-        echo '</ul>';
+    <form class="border p-4 rounded" method="POST">
+        <?php if (!empty($err)): ?>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <strong>SYSTEM ERROR</strong>
+                <ul>
+                    <?php foreach ($err as $error): ?>
+                        <li><?php echo htmlspecialchars($error); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <?php endif; ?>
 
-        // Display the confirmation and detach form
-        echo '<form method="POST" class="border p-4 rounded">';
-        echo '<div class="alert alert-warning">Are you sure you want to detach this subject?</div>';
-        
-        // Detach Button
-        echo '<button type="submit" class="btn btn-danger">Detach Subject</button>';
-        echo '</form>';
+        <p class="mb-3">Are you sure you want to delete the following record?</p>
 
-        // Handle form submission to detach the subject
-        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            $strSqlDetach = "DELETE FROM student_subjects WHERE student_id = ? AND subject_id = ?";
-            if ($stmt = mysqli_prepare($con, $strSqlDetach)) {
-                mysqli_stmt_bind_param($stmt, "ii", $_SESSION['k'], $subjectId);
-                mysqli_stmt_execute($stmt);
+        <ul class="mb-3">
+            <li>
+                <strong>Student ID:</strong> <?php echo htmlspecialchars($recPersons['student_id']); ?>
+            </li>
+            <li>
+                <strong>First Name:</strong> <?php echo htmlspecialchars($recPersons['first_name']); ?>
+            </li>
+            <li>
+                <strong>Last Name:</strong> <?php echo htmlspecialchars($recPersons['last_name']); ?>
+            </li>
+        </ul>
 
-                if (mysqli_stmt_affected_rows($stmt) > 0) {
-                    echo '<div class="alert alert-success mt-3">Subject detached successfully!</div>';
-                } else {
-                    echo '<div class="alert alert-danger mt-3">Error detaching the subject. Please try again.</div>';
-                }
-                mysqli_stmt_close($stmt);
-            }
-        }
-        
-        echo '</main>';
-    } else {
-        echo '<div class="alert alert-warning mt-3">Subject not found or not attached to this student!</div>';
-    }
-}
-?>
+        <div class="d-flex">
+            <button class="btn btn-secondary me-2" type="button" id="btnCancel" onclick="window.location.href='register.php'">Cancel</button>
+            <button class="btn btn-danger" type="submit" name="btnDelete" id="btnDelete">Delete Subject Record</button>
+        </div>
+    </form>
+
+</main>
+
+ <?php require_once('../partials/footer.php'); ?>

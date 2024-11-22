@@ -1,4 +1,4 @@
-<?php
+<?php 
 session_start();
 require_once('../partials/header.php');
 require_once('../partials/side-bar.php');
@@ -52,22 +52,38 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Attach the subjects to the student
         if (empty($err)) {
             foreach ($subjectIds as $subjectId) {
-                // Adjusted query with grade set to 0.00
-                $attachSubjectSql = "INSERT INTO students_subjects (student_id, subject_id, grade) VALUES (?, ?, 0.00)";
+    // Check if the student is already attached to the subject
+			    $checkSubjectSql = "SELECT * FROM students_subjects WHERE student_id = ? AND subject_id = ?";
+			    if ($stmt = mysqli_prepare($con, $checkSubjectSql)) {
+			        mysqli_stmt_bind_param($stmt, "ii", $_SESSION['k'], $subjectId);
+			        mysqli_stmt_execute($stmt);
+		       	 	mysqli_stmt_store_result($stmt);
 
-                if ($stmt = mysqli_prepare($con, $attachSubjectSql)) {
-                    mysqli_stmt_bind_param($stmt, "ii", $_SESSION['k'], $subjectId);
-                    if (mysqli_stmt_execute($stmt)) {
-                        // Set a success message and keep the page on the same URL
-                        $_SESSION['successMsg'] = 'Subjects attached successfully!';
-                    } else {
-                        $err[] = "Error attaching subject: " . mysqli_error($con); // Add database error message
-                    }
-                    mysqli_stmt_close($stmt);
-                } else {
-                    $err[] = "Error preparing statement for subject.";
-                }
-            }
+        // If the student is already attached to the subject, show an error
+		        if (mysqli_stmt_num_rows($stmt) > 0) {
+		            $err[] = "Subject " . htmlspecialchars($subjectId) . " is already attached to this student!";
+		        } else {
+		            // If not, insert the new record
+		            $attachSubjectSql = "INSERT INTO students_subjects (student_id, subject_id, grade) VALUES (?, ?, 0.00)";
+		            if ($stmt = mysqli_prepare($con, $attachSubjectSql)) {
+		                mysqli_stmt_bind_param($stmt, "ii", $_SESSION['k'], $subjectId);
+		                if (mysqli_stmt_execute($stmt)) {
+		                    // Set a success message and keep the page on the same URL
+		                    $_SESSION['successMsg'] = 'Subjects attached successfully!';
+		                } else {
+		                    $err[] = "Error attaching subject: " . mysqli_error($con); // Add database error message
+		                }
+		            } else {
+		                $err[] = "Error preparing statement for subject.";
+		            }
+		        }
+
+		        // Close the statement once after the execution
+		        mysqli_stmt_close($stmt);
+		    } else {
+		        $err[] = "Error preparing statement to check subject attachment.";
+		    }
+}
         }
     } else {
         $err[] = 'No subjects selected!';
@@ -162,14 +178,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if ($attachedSubjectsResult && mysqli_num_rows($attachedSubjectsResult) > 0) {
                 $attachedSubjects = mysqli_fetch_all($attachedSubjectsResult, MYSQLI_ASSOC);
                 foreach ($attachedSubjects as $subject) {
-                    // Check for 'subject_id' key before using it
                     echo '<tr>';
                     echo '<td>' . htmlspecialchars($subject['subject_code']) . '</td>';
                     echo '<td>' . htmlspecialchars($subject['subject_name']) . '</td>';
                     echo '<td>' . (isset($subject['grade']) && !empty($subject['grade']) && $subject['grade'] != -1 ? htmlspecialchars($subject['grade']) : '--.--') . '</td>';
                     echo '<td class="text-center">';
                     echo '<a href="assign-grade.php?subject_id=' . $subject['subject_id'] . '" class="btn btn-warning me-2">Assign Grade</a>';
-                    echo '<a href="detach-subject.php?subject_id=' . $subject['subject_id'] . '" class="btn btn-danger">Detach</a>';
+                    echo '<a href="dettach-subject.php?subject_id=' . $subject['subject_id'] . '" class="btn btn-danger">Detach</a>';
                     echo '</td>';
                     echo '</tr>';
                 }

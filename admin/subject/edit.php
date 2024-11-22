@@ -1,77 +1,79 @@
 <?php 
-    session_start();
-    require_once('../partials/header.php');
-    require_once('../partials/side-bar.php');
-    guard();
+ob_start();  // Start output buffering
 
-    if (isset($_GET['k'])) {
-        $_SESSION['k'] = $_GET['k'];
+session_start();
+require_once('../partials/header.php');
+require_once('../partials/side-bar.php');
+guard();
+
+if (isset($_GET['k'])) {
+    $_SESSION['k'] = $_GET['k'];
+}
+
+// Open the connection
+$con = openConnection();
+$strSql = "SELECT * FROM subjects WHERE id = " . $_SESSION['k'];
+
+// Execute query
+if ($rsPerson = mysqli_query($con, $strSql)) {
+    if (mysqli_num_rows($rsPerson) > 0) {
+        // Fetch the result into $recPersons
+        $recPersons = mysqli_fetch_array($rsPerson);
+        mysqli_free_result($rsPerson);
+    } else {
+        echo '<tr>';
+        echo '<td colspan="4" align="center">No Record Found!</td>';
+        echo '</tr>';
     }
+}
 
+// Initialize error message array
+$err = [];
+
+// Add/Update subject logic
+if (isset($_POST['btnAdd'])) {
     // Open the connection
     $con = openConnection();
-    $strSql = "SELECT * FROM subjects WHERE id = " . $_SESSION['k'];
 
-    // Execute query
-    if ($rsPerson = mysqli_query($con, $strSql)) {
-        if (mysqli_num_rows($rsPerson) > 0) {
-            // Fetch the result into $recPersons
-            $recPersons = mysqli_fetch_array($rsPerson);
-            mysqli_free_result($rsPerson);
-        } else {
-            echo '<tr>';
-            echo '<td colspan="4" align="center">No Record Found!</td>';
-            echo '</tr>';
-        }
+    // Sanitize input data
+    $subjectCode = sanitizeInput($con, $_POST['txtSubjectCode']);
+    $subjectName = sanitizeInput($con, $_POST['txtSubjectName']);
+
+    // Validate inputs
+    if (empty($subjectCode)) {
+        $err[] = 'Subject Code is Required!';
+    }
+    if (empty($subjectName)) {
+        $err[] = 'Subject Name is Required!';
     }
 
-    // Initialize error message array
-    $err = [];
+    // Since we want to allow updating even with the same subject code, skip the check for duplicate subject code
+    if (empty($err)) {
+        $strSql = "UPDATE subjects SET subject_code = ?, subject_name = ? WHERE id = ?";
 
-    // Add/Update subject logic
-    if (isset($_POST['btnAdd'])) {
-        // Open the connection
-        $con = openConnection();
+        if ($stmt = mysqli_prepare($con, $strSql)) {
+            mysqli_stmt_bind_param($stmt, "ssi", $subjectCode, $subjectName, $_SESSION['k']);
+            mysqli_stmt_execute($stmt);
 
-        // Sanitize input data
-        $subjectCode = sanitizeInput($con, $_POST['txtSubjectCode']);
-        $subjectName = sanitizeInput($con, $_POST['txtSubjectName']);
-
-        // Validate inputs
-        if (empty($subjectCode)) {
-            $err[] = 'Subject Code is Required!';
-        }
-        if (empty($subjectName)) {
-            $err[] = 'Subject Name is Required!';
-        }
-
-        // Since we want to allow updating even with the same subject code, skip the check for duplicate subject code
-        if (empty($err)) {
-            $strSql = "UPDATE subjects SET subject_code = ?, subject_name = ? WHERE id = ?";
-
-            if ($stmt = mysqli_prepare($con, $strSql)) {
-                mysqli_stmt_bind_param($stmt, "ssi", $subjectCode, $subjectName, $_SESSION['k']);
-                mysqli_stmt_execute($stmt);
-
-                if (mysqli_stmt_affected_rows($stmt) > 0) {
-                    // Redirect to add.php after successful update
-                    header("Location: add.php");
-                    exit;
-                } else {
-                    $err[] = "Error: Could not update subject.";
-                }
-
-                mysqli_stmt_close($stmt);
+            if (mysqli_stmt_affected_rows($stmt) > 0) {
+                // Redirect to add.php after successful update
+                header("Location: add.php");
+                exit;
+            } else {
+                $err[] = "Error: Could not update subject.";
             }
-        }
 
-        // Close the database connection
-        closeConnection($con);
+            mysqli_stmt_close($stmt);
+        }
     }
 
-    // Check for success message in session
-    $successMsg = isset($_SESSION['successMsg']) ? $_SESSION['successMsg'] : '';
-    unset($_SESSION['successMsg']); // Clear the success message after displaying it
+    // Close the database connection
+    closeConnection($con);
+}
+
+// Check for success message in session
+$successMsg = isset($_SESSION['successMsg']) ? $_SESSION['successMsg'] : '';
+unset($_SESSION['successMsg']); // Clear the success message after displaying it
 ?>
 
 <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 pt-5">
@@ -110,3 +112,5 @@
 </main>
 
 <?php require_once('../partials/footer.php'); ?>
+
+<?php ob_end_flush();  // Send the output buffer to the browser ?>

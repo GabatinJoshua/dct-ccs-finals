@@ -1,4 +1,6 @@
 <?php 
+ob_start();  // Start output buffering
+
 session_start();
 require_once('../partials/header.php');
 require_once('../partials/side-bar.php');
@@ -101,3 +103,5 @@ if (isset($_POST['btnDelete'])) {
 </main>
 
 <?php require_once('../partials/footer.php'); ?>
+
+<?php ob_end_flush();  // Send the output buffer to the browser ?>
